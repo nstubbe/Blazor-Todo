@@ -1,0 +1,75 @@
+﻿@page "/"
+
+@using BlazorApp.Models
+@using BlazorApp.Services
+@using Microsoft.AspNetCore.Identity
+@inject ITodoService TodoService
+
+
+
+@foreach (var todo in todoList)
+{
+    <Todo TodoModel=@todo 
+          onDelete=@(async () => await DeleteTodo(@todo.Id)) 
+          onUpdate=@(async () => await UpdateTodo(@todo))
+          onCreate=@(async () => await CreateTodo(@todo))
+          onCancel=@(async () => await GetTodos())
+          />
+}
+
+<div onclick=@(async () => await AddTodo()) class="float-right button button-green action">Add Todo</div>
+
+
+@functions{
+
+    List<TodoModel> todoList = new List<TodoModel>();
+
+    protected override async Task OnInitAsync()
+    {
+        await GetTodos();
+    }
+
+    async Task AddTodo()
+    {
+        todoList.Add(new TodoModel
+        {
+            Id = todoList.Count * -1
+        });
+    }
+
+    async Task GetTodos()
+    {
+        todoList = await TodoService.GetTodos();
+        StateHasChanged();
+    }
+
+    async Task DeleteTodo(int id)
+    {
+        if (id > 0)
+        {
+            await TodoService.DeleteTodo(id);
+            await GetTodos();
+        }
+        else
+        {
+            var todo = todoList.Find(t => t.Id == id);
+            todoList.Remove(todo);
+        }
+
+        StateHasChanged();
+    }
+
+    async Task UpdateTodo(TodoModel model)
+    {
+        await TodoService.UpdateTodo(model);
+
+        await GetTodos();
+    }
+
+    async Task CreateTodo(TodoModel model)
+    {
+        await TodoService.CreateTodo(model);
+
+        await GetTodos();
+    }
+}

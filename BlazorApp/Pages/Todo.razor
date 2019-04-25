@@ -1,0 +1,104 @@
+﻿@using BlazorApp.Models
+@using BlazorApp.Services
+@using Microsoft.AspNetCore.Components
+@inject ITodoService TodoService
+
+@if (!EditMode)
+{
+    <div class="row todo">
+        <div class="col-md">
+            @TodoModel.Description
+        </div>
+        <div class="col-md-2">
+            @TodoModel.DeadLine.ToString("dd-MM-yyyy")
+        </div>
+        <div class="col-md-1">
+            <input bind=@TodoModel.IsCompleted onclick=@(e => ToggleCompleted()) type="checkbox"/>
+        </div>
+        <div onclick=@(e => EditTodo()) class="col-md-1 action"><i class="far fa-edit"></i></div>
+
+        <div onclick=@OnDelete class="col-1 todo_delete action">
+            <i class="far fa-trash-alt"></i>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row todo">
+        <div class="col-md">
+            <input type="text" bind=@TodoModel.Description/>
+        </div>
+        <div class="col-md-2">
+            <input type="date" bind=@TodoModel.DeadLine format-value="yyyy-MM-dd"/>
+        </div>
+        <div class="col-md-1">
+            <input type="checkbox" bind=@TodoModel.IsCompleted/>
+        </div>
+        <div onclick=@(e => Save()) class="col-md-1 action">
+            <i class="far fa-save"></i>
+        </div>
+        <div onclick=@(e => Cancel()) class="col-md-1 action">
+            <i class="far fa-window-close"></i>
+        </div>
+    </div>
+}
+
+
+@functions {
+    private bool EditMode { get; set; } = false;
+
+    [Parameter]
+    private TodoModel TodoModel { get; set; }
+
+    private TodoModel Original { get; set; }
+
+    [Parameter]
+    Action OnDelete { get; set; }
+
+    [Parameter]
+    Action OnUpdate { get; set; }
+
+    [Parameter]
+    Action OnCreate { get; set; }
+
+    [Parameter]
+    Action OnCancel { get; set; }
+
+    protected override async Task OnInitAsync()
+    {
+        EditMode = TodoModel.Id < 1;
+        Original = TodoModel;
+    }
+
+    void EditTodo()
+    {
+        EditMode = true;
+    }
+
+    void ToggleCompleted()
+    {
+        TodoModel.IsCompleted = !TodoModel.IsCompleted;
+        Save();
+    }
+
+    void Save()
+    {
+        EditMode = false;
+
+        if (TodoModel.Id > 0)
+        {
+            OnUpdate.Invoke();
+        }
+        else
+        {
+            OnCreate.Invoke();
+        }
+    }
+
+    void Cancel()
+    {
+        EditMode = false;
+        OnCancel.Invoke();
+    }
+
+}
